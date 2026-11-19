@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>Bakkifa Rashaya - FX Impact M4 & Lebanese Birds</title>
+<script src="https://cdn.jsdelivr.net/npm/playcanvas@2.24.1/build/playcanvas.min.js"></script>
+<style>
+*{box-sizing:border-box;user-select:none;-webkit-user-select:none;touch-action:none}
+html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#000;font-family:'Segoe UI',Arial,sans-serif}
+#game-canvas{width:100%;height:100%;display:block}
+#hud{position:fixed;inset:0;pointer-events:none;color:#fff;z-index:10}
+.btn,.panel{pointer-events:auto}
+.top-left{position:absolute;top:12px;left:14px;display:flex;flex-direction:column;gap:7px}
+.row{display:flex;gap:8px;align-items:center}
+.pill{background:rgba(18,21,25,.88);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:7px 13px;font-weight:700;font-size:12px;display:flex;align-items:center;gap:7px;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.45)}
+.pill-blue{background:rgba(65,92,114,.88)}.pill-amber{background:rgba(166,108,36,.9)}
+.menu-btn{width:152px}.pause-btn{width:40px;height:40px;justify-content:center;padding:0}
+.compass-wrap{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:380px;text-align:center;text-shadow:0 2px 4px rgba(0,0,0,.9)}
+.compass-strip{font-size:14px;font-weight:700;letter-spacing:2px;border-bottom:1px solid rgba(255,255,255,.45);padding-bottom:3px;margin-bottom:4px}
+.waypoint{font-size:12px;font-weight:700}
+.top-right{position:absolute;top:12px;right:14px;display:flex;flex-direction:column;align-items:flex-end;gap:7px}
+.status-bar{background:rgba(18,21,25,.88);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:7px 13px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:10px}
+.divider{width:1px;height:15px;background:rgba(255,255,255,.28)}.sub-pill{font-size:11px;padding:5px 11px}
+#crosshair{position:absolute;top:50%;left:50%;width:5px;height:5px;transform:translate(-50%,-50%);background:rgba(255,255,255,.9);border-radius:50%;box-shadow:0 0 3px #000}
+#scope-overlay{position:fixed;inset:0;pointer-events:none;z-index:5;display:none;align-items:center;justify-content:center;background:radial-gradient(circle at center,transparent 34%,rgba(0,0,0,.96) 36%,#000 100%)}
+#scope-overlay.active{display:flex}#scope-svg{width:min(76vh,76vw);height:min(76vh,76vw)}
+.scope-telemetry{position:fixed;bottom:18%;left:50%;transform:translateX(-50%);display:none;gap:14px;z-index:12;pointer-events:none;background:rgba(10,14,18,.8);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;color:#b9f5c8}
+.scope-telemetry.active{display:flex}
+#turret-bar{position:fixed;top:76px;left:50%;transform:translateX(-50%);display:none;gap:8px;align-items:center;z-index:15;background:rgba(16,20,24,.9);border:1px solid rgba(255,255,255,.22);border-radius:10px;padding:6px 10px;pointer-events:auto;font-size:11px;font-weight:700}
+#turret-bar.active{display:flex}
+.t-btn{background:#2b3440;color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:4px 8px;cursor:pointer;font-weight:700;font-size:11px}
+#joystick-base{position:absolute;bottom:24px;left:36px;width:108px;height:108px;border-radius:50%;border:2px solid rgba(255,255,255,.75);background:rgba(255,255,255,.08);pointer-events:auto}
+#joystick-knob{position:absolute;top:50%;left:50%;width:42px;height:42px;margin:-21px 0 0 -21px;border-radius:50%;background:rgba(255,255,255,.92)}
+.circle-btn{position:absolute;border-radius:50%;border:2px solid rgba(255,255,255,.85);background:rgba(20,24,28,.6);color:#fff;font-weight:700;font-size:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto}
+.circle-btn:active,.circle-btn.active{transform:scale(.94);background:rgba(82,168,224,.45)}
+.fire-btn{background:rgba(196,68,60,.92);font-size:12px}
+#btn-fire-left{bottom:106px;left:175px;width:64px;height:64px}#btn-turret{bottom:26px;left:175px;width:60px;height:60px}#btn-zoom{bottom:26px;left:248px;width:60px;height:60px}
+#btn-crouch{bottom:26px;right:204px;width:56px;height:56px}#btn-aim{bottom:26px;right:124px;width:64px;height:64px}#btn-newpaper{bottom:102px;right:104px;width:58px;height:58px}
+#btn-reload{bottom:148px;right:24px;width:58px;height:58px}#btn-sprint{bottom:216px;right:24px;width:58px;height:58px}#btn-fire-right{bottom:24px;right:24px;width:86px;height:86px;font-size:13px}
+.btn-ico{font-size:16px;line-height:1.1;margin-bottom:2px}
+#toast{position:fixed;top:125px;left:50%;transform:translateX(-50%);background:rgba(15,22,28,.92);border:1px solid #63b3ed;color:#e6f4ff;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;z-index:30;opacity:0;transition:opacity .25s;pointer-events:none;text-align:center;max-width:88vw}
+#toast.show{opacity:1}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.68);display:none;align-items:center;justify-content:center;z-index:40;pointer-events:auto}
+.modal.open{display:flex}
+.modal-card{width:min(680px,92vw);max-height:82vh;overflow-y:auto;background:#171b21;border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:18px;color:#fff}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid rgba(255,255,255,.14);padding-bottom:8px}
+.close-x{background:#2d3540;border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-weight:700}
+.grid-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:8px}
+.item-card{background:#202630;border:1px solid rgba(255,255,255,.14);border-radius:9px;padding:10px;cursor:pointer;display:flex;flex-direction:column;gap:4px}
+.item-card.selected{border-color:#48bb78;background:#1e3328}
+.tag{font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.12);width:fit-content}.tag-prot{background:rgba(229,62,62,.35);color:#feb2b2}
+.hint{position:absolute;bottom:5px;left:50%;transform:translateX(-50%);font-size:10.5px;opacity:.78;text-shadow:0 1px 2px #000;white-space:nowrap}
+</style>
+</head>
+<body>
+<canvas id="game-canvas"></canvas>
+<div id="scope-overlay"><svg id="scope-svg" viewBox="-200 -200 400 400"><circle cx="0" cy="0" r="196" fill="none" stroke="#111" stroke-width="6"/><line x1="-195" y1="0" x2="-12" y2="0" stroke="#0f0f0f" stroke-width="1.6"/><line x1="12" y1="0" x2="195" y2="0" stroke="#0f0f0f" stroke-width="1.6"/><line x1="0" y1="-195" x2="0" y2="-12" stroke="#0f0f0f" stroke-width="1.6"/><line x1="0" y1="12" x2="0" y2="195" stroke="#0f0f0f" stroke-width="1.6"/><line x1="-195" y1="0" x2="-115" y2="0" stroke="#050505" stroke-width="5"/><line x1="115" y1="0" x2="195" y2="0" stroke="#050505" stroke-width="5"/><line x1="0" y1="115" x2="0" y2="195" stroke="#050505" stroke-width="5"/><line x1="-12" y1="0" x2="12" y2="0" stroke="#111" stroke-width=".9"/><line x1="0" y1="-12" x2="0" y2="12" stroke="#111" stroke-width=".9"/><circle cx="0" cy="0" r="2.2" fill="#ff2a2a"/><g fill="#0e0e0e"><circle cx="0" cy="20" r="1.6"/><circle cx="0" cy="40" r="1.6"/><circle cx="0" cy="60" r="1.6"/><circle cx="0" cy="80" r="1.6"/><circle cx="0" cy="-20" r="1.6"/><circle cx="0" cy="-40" r="1.6"/><circle cx="20" cy="0" r="1.6"/><circle cx="40" cy="0" r="1.6"/><circle cx="-20" cy="0" r="1.6"/><circle cx="-40" cy="0" r="1.6"/></g></svg></div>
+<div class="scope-telemetry" id="scope-telemetry"><span id="tel-zoom">ZOOM: 12x</span><span id="tel-range">LRF: -- M</span><span id="tel-zero">TURRET: +0.0 / 0.0 MRAD</span><span>WIND: 2.9 m/s SW</span></div>
+<div id="turret-bar"><span>ELV:</span><button class="t-btn" id="elv-dn">-0.2</button><span id="elv-val">0.0</span><button class="t-btn" id="elv-up">+0.2</button><span>WND:</span><button class="t-btn" id="wnd-l">L</button><span id="wnd-val">0.0</span><button class="t-btn" id="wnd-r">R</button><button class="t-btn" id="btn-set-zero" style="background:#2f6b47">RESET 0</button><button class="t-btn" id="btn-refill-air" style="background:#2d5b88">REFILL 250 BAR</button></div>
+<div id="hud">
+  <div class="top-left">
+    <div class="row"><div class="pill pause-btn btn" id="btn-pause">❚❚</div><div class="pill pill-blue btn" id="btn-bag">🎒 BAG <span id="bag-count">0</span></div></div>
+    <div class="pill menu-btn btn pill-amber" id="btn-caller">🔊 BIRD CALLER</div>
+    <div class="pill menu-btn btn" id="btn-inv">🧳 SLUGS & BAG</div>
+    <div class="pill menu-btn btn" id="btn-map">🗺️ BAKKIFA MAP</div>
+  </div>
+  <div class="compass-wrap"><div class="compass-strip" id="compass-text">| NE | E | SE |</div><div class="waypoint">BAKKIFA, RASHAYA • 996 M • PAPER TARGET 50 M</div></div>
+  <div class="top-right">
+    <div class="status-bar panel"><span>FX IMPACT M4 .22</span><span class="divider"></span><span id="ammo-chamber">28/28</span><span class="divider"></span><span id="air-bar">250 BAR</span></div>
+    <div class="status-bar sub-pill panel" id="slug-badge">H&N Slug HP 25gr (.217)</div>
+    <div class="status-bar sub-pill panel">☀️ BAKKIFA 16°C • SW 2.9 m/s</div>
+  </div>
+  <div id="crosshair"></div>
+  <div id="joystick-base"><div id="joystick-knob"></div></div>
+  <div class="circle-btn fire-btn" id="btn-fire-left"><span class="btn-ico">🔸</span>FIRE</div>
+  <div class="circle-btn" id="btn-turret"><span class="btn-ico">🎛️</span>ZERO</div>
+  <div class="circle-btn" id="btn-zoom"><span class="btn-ico">🔍</span>ZOOM</div>
+  <div class="circle-btn" id="btn-crouch"><span class="btn-ico">🧎</span>CROUCH</div>
+  <div class="circle-btn" id="btn-aim"><span class="btn-ico">🎯</span>SCOPE</div>
+  <div class="circle-btn" id="btn-newpaper"><span class="btn-ico">📄</span>PAPER</div>
+  <div class="circle-btn" id="btn-reload"><span class="btn-ico">↻</span>RELOAD</div>
+  <div class="circle-btn" id="btn-sprint"><span class="btn-ico">🏃</span>SPRINT</div>
+  <div class="circle-btn fire-btn" id="btn-fire-right"><span class="btn-ico">🔸</span>FIRE</div>
+  <div class="hint">Drag Look • WASD Move • Right-Click Scope • Wheel Zoom • Click/Space Fire • R Reload H&N • T Zero Turrets • B Caller</div>
+</div>
+<div id="toast"></div>
+<div class="modal" id="modal-caller"><div class="modal-card"><div class="modal-header"><b>🔊 Lebanese Bird Caller (Bakkifa & Jabal El Sheikh)</b><button class="close-x" onclick="closeModals()">✕</button></div><p style="font-size:12px;color:#b8c4d4;margin-top:0">Tap a species to play its call and attract flocks (real-world Lebanon Law 580 prohibits electronic callers & protects Chukar/non-game birds).</p><div class="grid-list" id="caller-list"></div></div></div>
+<div class="modal" id="modal-inv"><div class="modal-card"><div class="modal-header"><b>🧳 FX Impact M4 — H&N Slug HP & Bag</b><button class="close-x" onclick="closeModals()">✕</button></div><div style="font-weight:700;font-size:13px;margin-bottom:8px">Select H&N .22 Slug Type:</div><div class="grid-list" id="slug-list" style="margin-bottom:14px"></div><div style="font-weight:700;font-size:13px;margin-bottom:8px">Collected Lebanese Birds:</div><div id="bag-list" style="font-size:12px;color:#cbd5e0">No birds collected yet. Walk within 4m of downed birds!</div></div></div>
+<div class="modal" id="modal-map"><div class="modal-card"><div class="modal-header"><b>🗺️ Bakkifa — Rashaya, Bekaa (996 m)</b><button class="close-x" onclick="closeModals()">✕</button></div><canvas id="map-canvas" width="620" height="320" style="width:100%;border-radius:8px;background:#1e2620"></canvas><div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="t-btn" onclick="teleportTo(0,26)">🎯 50m Zeroing Bench</button><button class="t-btn" onclick="teleportTo(-14,-18)">🏘️ Bakkifa Village</button><button class="t-btn" onclick="teleportTo(38,-22)">⛰️ Mount Hermon Slopes</button></div></div></div>
+
+<script>
+window.onerror=function(msg,src,line){const t=document.getElementById('toast');if(t){t.textContent='⚠️ Line '+line+': '+msg;t.classList.add('show');}};
+const canvas=document.getElementById('game-canvas');
+const app=new pc.Application(canvas,{keyboard:new pc.Keyboard(window),mouse:new pc.Mouse(canvas)});
+app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);app.setCanvasResolution(pc.RESOLUTION_AUTO);
+window.addEventListener('resize',()=>app.resizeCanvas());app.start();
+const device=app.graphicsDevice;
+
+app.scene.ambientLight=new pc.Color(.48,.52,.58);
+app.scene.fog.type=pc.FOG_LINEAR;app.scene.fog.color.set(.68,.80,.90);app.scene.fog.start=65;app.scene.fog.end=280;
+
+const sun=new pc.Entity('Sun');
+sun.addComponent('light',{type:'directional',color:new pc.Color(1,.96,.89),intensity:1.55,castShadows:true,shadowBias:.12,normalOffsetBias:.04,shadowDistance:95,shadowResolution:2048,shadowType:pc.SHADOW_PCF3_32F});
+sun.setEulerAngles(48,138,0);app.root.addChild(sun);
+
+const player=new pc.Entity('Player');player.setPosition(0,0,26);app.root.addChild(player);
+const cameraEntity=new pc.Entity('Cam');
+cameraEntity.addComponent('camera',{clearColor:new pc.Color(.56,.76,.93),fov:62,nearClip:.04,farClip:500,toneMapping:pc.TONEMAP_ACES,gammaCorrection:pc.GAMMA_SRGB});
+cameraEntity.setLocalPosition(0,1.62,0);player.addChild(cameraEntity);
+
+let audioCtx=null;
+const getAudio=()=>{if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx;};
+function playPcpShotSound(){const c=getAudio(),n=c.currentTime,o=c.createOscillator(),g=c.createGain();o.type='triangle';o.frequency.setValueAtTime(290,n);o.frequency.exponentialRampToValueAtTime(55,n+.09);g.gain.setValueAtTime(.42,n);g.gain.exponentialRampToValueAtTime(.001,n+.11);o.connect(g).connect(c.destination);o.start(n);o.stop(n+.12);const b=c.createBuffer(1,c.sampleRate*.09,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/900);const s=c.createBufferSource();s.buffer=b;const ng=c.createGain();ng.gain.value=.25;s.connect(ng).connect(c.destination);s.start(n);}
+function playClickSound(f=850){const c=getAudio(),n=c.currentTime,o=c.createOscillator(),g=c.createGain();o.type='square';o.frequency.setValueAtTime(f,n);g.gain.setValueAtTime(.08,n);g.gain.exponentialRampToValueAtTime(.001,n+.03);o.connect(g).connect(c.destination);o.start(n);o.stop(n+.035);}
+function playBirdCallAudio(sp){const c=getAudio(),n=c.currentTime;sp.callNotes.forEach(([d,f1,f2,dur,t='sine'])=>{const o=c.createOscillator(),g=c.createGain();o.type=t;o.frequency.setValueAtTime(f1,n+d);o.frequency.exponentialRampToValueAtTime(Math.max(40,f2),n+d+dur);g.gain.setValueAtTime(.001,n+d);g.gain.linearRampToValueAtTime(.18,n+d+.02);g.gain.exponentialRampToValueAtTime(.001,n+d+dur);o.connect(g).connect(c.destination);o.start(n+d);o.stop(n+d+dur+.02);});}
+
+function makeCanvasTex(s,fn,rep=true){const c=document.createElement('canvas');c.width=c.height=s;fn(c.getContext('2d'),s);const t=new pc.Texture(device,{format:pc.PIXELFORMAT_RGBA8,mipmaps:true,minFilter:pc.FILTER_LINEAR_MIPMAP_LINEAR,magFilter:pc.FILTER_LINEAR,addressU:rep?pc.ADDRESS_REPEAT:pc.ADDRESS_CLAMP_TO_EDGE,addressV:rep?pc.ADDRESS_REPEAT:pc.ADDRESS_CLAMP_TO_EDGE});t.setSource(c);return t;}
+const groundTex=makeCanvasTex(256,(x,s)=>{x.fillStyle='#cbc3b7';x.fillRect(0,0,s,s);for(let i=0;i<9000;i++){const v=145+Math.floor(Math.random()*75);x.fillStyle=`rgb(${v},${v-5},${v-12})`;x.fillRect(Math.random()*s,Math.random()*s,2.2,2.2);}});
+const stoneWallTex=makeCanvasTex(512,(x,s)=>{x.fillStyle='#4f4941';x.fillRect(0,0,s,s);const r=6,c=5,rh=s/r,cw=s/c;for(let i=0;i<r;i++){const o=(i%2)*cw*.45;for(let j=-1;j<=c;j++){const sh=165+Math.floor(Math.random()*48);x.fillStyle=`rgb(${sh+14},${sh+8},${sh-8})`;x.beginPath();x.roundRect(j*cw+o+4,i*rh+4,cw-8,rh-8,7);x.fill();}}});
+const lebaneseStoneTex=makeCanvasTex(512,(x,s)=>{x.fillStyle='#d8c7a8';x.fillRect(0,0,s,s);x.strokeStyle='rgba(110,95,70,.45)';x.lineWidth=2;for(let y=0;y<s;y+=32){x.beginPath();x.moveTo(0,y);x.lineTo(s,y);x.stroke();for(let px=((y/32)%2)*32;px<s;px+=64){x.beginPath();x.moveTo(px,y);x.lineTo(px,y+32);x.stroke();}}x.fillStyle='#242b33';[[80,120],[230,120],[380,120],[80,320],[380,320]].forEach(([wx,wy])=>{x.fillRect(wx,wy,48,76);x.beginPath();x.arc(wx+24,wy,24,Math.PI,0);x.fill();});},false);
+const qarmidRoofTex=makeCanvasTex(256,(x,s)=>{x.fillStyle='#b4482e';x.fillRect(0,0,s,s);for(let y=0;y<s;y+=22){x.fillStyle='rgba(0,0,0,.18)';x.fillRect(0,y,s,3);}});
+const barkTex=makeCanvasTex(256,(x,s)=>{x.fillStyle='#584739';x.fillRect(0,0,s,s);for(let i=0;i<350;i++){x.fillStyle=Math.random()>.5?'#3d2f24':'#705d4b';x.fillRect(Math.random()*s,Math.random()*s,4,28+Math.random()*40);}});
+const leafTex=makeCanvasTex(256,(x,s)=>{x.clearRect(0,0,s,s);for(let i=0;i<160;i++){const a=Math.random()*Math.PI*2,rad=Math.random()*s*.36,cx=s*.5+Math.cos(a)*rad,cy=s*.5+Math.sin(a)*rad,g=84+Math.floor(Math.random()*54);x.fillStyle=`rgb(${Math.floor(g*.7)},${g},${Math.floor(g*.48)})`;x.save();x.translate(cx,cy);x.rotate(Math.random()*Math.PI);x.beginPath();x.ellipse(0,0,14,6,0,0,Math.PI*2);x.fill();x.restore();}},false);
+const skyTex=makeCanvasTex(512,(x,s)=>{const g=x.createLinearGradient(0,0,0,s);g.addColorStop(0,'#2a6eb8');g.addColorStop(.45,'#78b4e6');g.addColorStop(.55,'#c4e0f4');g.addColorStop(1,'#d5e6f3');x.fillStyle=g;x.fillRect(0,0,s,s);x.fillStyle='rgba(255,255,255,.32)';for(let i=0;i<18;i++){x.beginPath();x.ellipse(Math.random()*s,s*(.25+Math.random()*.22),30+Math.random()*50,9+Math.random()*12,0,0,Math.PI*2);x.fill();}},false);
+
+const skyMat=new pc.StandardMaterial();skyMat.useLighting=false;skyMat.useFog=false;skyMat.emissiveMap=skyTex;skyMat.emissive=new pc.Color(1,1,1);skyMat.cull=pc.CULLNONE;skyMat.update();
+const skyDome=new pc.Entity('SkyDome');skyDome.addComponent('render',{meshInstances:[new pc.MeshInstance(pc.Mesh.fromGeometry(device,new pc.SphereGeometry({radius:340})),skyMat)],castShadows:false,receiveShadows:false});app.root.addChild(skyDome);
+
+const roadCenterX=(z)=>-Math.sin((z-20)*.035)*4;
+function terrainHeight(x,z){const dx=x-roadCenterX(z);let h=0;if(Math.abs(dx)>4.5)h+=Math.sin(x*.05)*Math.cos(z*.05)*1.4;if(x>25){const s=(x-25)/115;h+=s*s*48+Math.sin(x*.14+z*.11)*2.2;}if(x<-30)h+=Math.min(18,((-30-x)/90)*12)+Math.cos(z*.08)*1.5;if(Math.abs(x)<6&&z>-32&&z<34)h*=Math.max(0,(Math.abs(x)-3.5)/2.5);return h;}
+
+const terrainMat=new pc.StandardMaterial();terrainMat.diffuseMap=groundTex;terrainMat.diffuseVertexColor=true;terrainMat.gloss=.1;terrainMat.update();
+(()=>{
+  const size=280,segs=140,pos=[],uvs=[],cols=[],idx=[];
+  for(let iz=0;iz<=segs;iz++){const vz=iz/segs,z=(vz-.5)*size;for(let ix=0;ix<=segs;ix++){
+    const vx=ix/segs,x=(vx-.5)*size,y=terrainHeight(x,z);pos.push(x,y,z);uvs.push(vx*55,vz*55);
+    const d=Math.abs(x-roadCenterX(z));let r=136,g=130,b=122;
+    if(d>4.2){const t=Math.min(1,(d-4.2)/3.5),rk=y>18;r=Math.round(r*(1-t)+(rk?168:142)*t);g=Math.round(g*(1-t)+(rk?162:108)*t);b=Math.round(b*(1-t)+(rk?152:76)*t);}
+    if(y>28){const st=Math.min(1,(y-28)/8);r=Math.round(r*(1-st)+238*st);g=Math.round(g*(1-st)+242*st);b=Math.round(b*(1-st)+248*st);}
+    cols.push(r,g,b,255);
+  }}
+  for(let iz=0;iz<segs;iz++)for(let ix=0;ix<segs;ix++){const a=iz*(segs+1)+ix,b=a+1,c=a+segs+1,d=c+1;idx.push(a,c,b,b,c,d);}
+  const m=new pc.Mesh(device);m.setPositions(pos);m.setNormals(pc.calculateNormals(pos,idx));m.setUvs(0,uvs);m.setColors(new Uint8Array(cols));m.setIndices(idx);m.update();
+  const e=new pc.Entity('Terrain');e.addComponent('render',{meshInstances:[new pc.MeshInstance(m,terrainMat)],castShadows:false,receiveShadows:true});app.root.addChild(e);
+})();
+
+const wallMat=new pc.StandardMaterial();wallMat.diffuseMap=stoneWallTex;wallMat.gloss=.16;wallMat.update();
+(()=>{
+  const sm=pc.Mesh.fromGeometry(device,new pc.BoxGeometry({halfExtents:new pc.Vec3(.24,.55,1.15)}));
+  for(let z=30;z>=-36;z-=2.1){const x=roadCenterX(z)+4.4,nx=roadCenterX(z-2.1)+4.4,e=new pc.Entity();e.setPosition(x,terrainHeight(x,z)+.45,z);e.setEulerAngles(0,Math.atan2(nx-x,-2.1)*180/Math.PI,0);e.addComponent('render',{meshInstances:[new pc.MeshInstance(sm,wallMat)]});app.root.addChild(e);}
+  const hm=new pc.StandardMaterial();hm.diffuseMap=lebaneseStoneTex;hm.gloss=.12;hm.update();
+  const rm=new pc.StandardMaterial();rm.diffuseMap=qarmidRoofTex;rm.gloss=.25;rm.update();
+  [[-16,-16,12,5.2,4,4.5],[-24,-28,25,6,4.6,5],[-14,-38,-8,5,3.8,4.2],[-28,4,5,5.6,4.2,4.4],[16,-42,-20,5.4,4,4.5]].forEach(([hx,hz,yaw,w,h,d])=>{
+    const ho=new pc.Entity();ho.setPosition(hx,terrainHeight(hx,hz),hz);ho.setEulerAngles(0,yaw,0);
+    const b=new pc.Entity();b.setLocalPosition(0,h*.5,0);b.addComponent('render',{meshInstances:[new pc.MeshInstance(pc.Mesh.fromGeometry(device,new pc.BoxGeometry({halfExtents:new pc.Vec3(w*.5,h*.5,d*.5)})),hm)]});ho.addChild(b);
+    const rf=new pc.Entity();rf.setLocalPosition(0,h+.85,0);rf.setLocalEulerAngles(0,45,0);rf.addComponent('render',{meshInstances:[new pc.MeshInstance(pc.Mesh.fromGeometry(device,new pc.ConeGeometry({baseRadius:Math.max(w,d)*.74,height:1.8,capSegments:4})),rm)]});ho.addChild(rf);app.root.addChild(ho);
+  });
+})();
+
+const treePerches=[];
+(()=>{
+  const tm=new pc.StandardMaterial();tm.diffuseMap=barkTex;tm.gloss=.1;tm.update();
+  const lm=new pc.StandardMaterial();lm.diffuseMap=leafTex;lm.alphaTest=.42;lm.cull=pc.CULLNONE;lm.update();
+  const trk=pc.Mesh.fromGeometry(device,new pc.CylinderGeometry({radius:.22,height:4.2}));
+  const crd=pc.Mesh.fromGeometry(device,new pc.PlaneGeometry({halfExtents:new pc.Vec2(2.2,2.2)}));
+  [[9,10],[13,-4],[8,-14],[17,18],[22,-24],[-10,12],[-14,-4],[-9,-26],[-22,18],[28,6],[32,-16],[12,32]].forEach(([tx,tz])=>{
+    const ty=terrainHeight(tx,tz),t=new pc.Entity();t.setPosition(tx,ty,tz);
+    const tr=new pc.Entity();tr.setLocalPosition(0,2.1,0);tr.addComponent('render',{meshInstances:[new pc.MeshInstance(trk,tm)]});t.addChild(tr);
+    for(let i=0;i<6;i++){const c=new pc.Entity();c.setLocalPosition((Math.random()-.5)*1.4,3.8+Math.random()*1.6,(Math.random()-.5)*1.4);c.setLocalEulerAngles(55+Math.random()*45,i*60,Math.random()*30);c.addComponent('render',{meshInstances:[new pc.MeshInstance(crd,lm)]});t.addChild(c);}
+    app.root.addChild(t);treePerches.push(new pc.Vec3(tx,ty+4.3,tz));
+  });
+})();
+
+const PAPER_POS=new pc.Vec3(0,1.45,-24),PAPER_W=.9,PAPER_H=.9;
+const paperCanvas=document.createElement('canvas');paperCanvas.width=paperCanvas.height=512;const pCtx=paperCanvas.getContext('2d');
+const paperTex=new pc.Texture(device,{format:pc.PIXELFORMAT_RGBA8,mipmaps:false,minFilter:pc.FILTER_LINEAR,magFilter:pc.FILTER_LINEAR,addressU:pc.ADDRESS_CLAMP_TO_EDGE,addressV:pc.ADDRESS_CLAMP_TO_EDGE});
+function resetPaperTarget(){pCtx.fillStyle='#f3efe4';pCtx.fillRect(0,0,512,512);pCtx.strokeStyle='rgba(70,110,140,.28)';pCtx.lineWidth=1;for(let i=0;i<=512;i+=32){pCtx.beginPath();pCtx.moveTo(i,0);pCtx.lineTo(i,512);pCtx.stroke();pCtx.beginPath();pCtx.moveTo(0,i);pCtx.lineTo(512,i);pCtx.stroke();}[210,155,105,60].forEach((r,idx)=>{pCtx.strokeStyle=idx===3?'#c53030':'#2d3748';pCtx.lineWidth=3;pCtx.beginPath();pCtx.arc(256,256,r,0,Math.PI*2);pCtx.stroke();});pCtx.fillStyle='#c53030';pCtx.beginPath();pCtx.arc(256,256,22,0,Math.PI*2);pCtx.fill();pCtx.fillStyle='#fff';pCtx.beginPath();pCtx.arc(256,256,5,0,Math.PI*2);pCtx.fill();pCtx.fillStyle='#1a202c';pCtx.font='bold 20px sans-serif';pCtx.fillText('BAKKIFA 50M ZERO TARGET (H&N SLUG)',54,34);paperTex.setSource(paperCanvas);paperTex.upload();}
+resetPaperTarget();
+(()=>{const wm=new pc.StandardMaterial();wm.diffuse=new pc.Color(.45,.30,.18);wm.update();const st=new pc.Entity();st.setPosition(PAPER_POS.x,0,PAPER_POS.z);const pm=pc.Mesh.fromGeometry(device,new pc.BoxGeometry({halfExtents:new pc.Vec3(.05,.95,.05)}));[-.48,.48].forEach(px=>{const p=new pc.Entity();p.setLocalPosition(px,.95,0);p.addComponent('render',{meshInstances:[new pc.MeshInstance(pm,wm)]});st.addChild(p);});const pMat=new pc.StandardMaterial();pMat.diffuseMap=paperTex;pMat.gloss=.05;pMat.cull=pc.CULLNONE;pMat.update();const bd=new pc.Entity();bd.setLocalPosition(0,PAPER_POS.y,.06);bd.setLocalEulerAngles(90,0,0);bd.addComponent('render',{meshInstances:[new pc.MeshInstance(pc.Mesh.fromGeometry(device,new pc.PlaneGeometry({halfExtents:new pc.Vec2(PAPER_W*.5,PAPER_H*.5)})),pMat)]});st.addChild(bd);app.root.addChild(st);const bn=new pc.Entity();bn.setPosition(.95,.75,25.4);bn.addComponent('render',{meshInstances:[new pc.MeshInstance(pc.Mesh.fromGeometry(device,new pc.BoxGeometry({halfExtents:new pc.Vec3(.45,.05,.7)})),wm)]});app.root.addChild(bn);})();
+function stampBulletHole(hx,hy){const u=(hx-(PAPER_POS.x-PAPER_W*.5))/PAPER_W,v=1-(hy-(PAPER_POS.y-PAPER_H*.5))/PAPER_H;if(u<0||u>1||v<0||v>1)return false;const cx=u*512,cy=v*512;pCtx.fillStyle='rgba(40,40,40,.45)';pCtx.beginPath();pCtx.arc(cx,cy,8,0,Math.PI*2);pCtx.fill();pCtx.fillStyle='#0c0d0f';pCtx.beginPath();pCtx.arc(cx,cy,4.8,0,Math.PI*2);pCtx.fill();paperTex.upload();showToast(`🎯 Paper Hit! X: ${((u-.5)*PAPER_W*100).toFixed(1)} cm, Y: ${((.5-v)*PAPER_H*100).toFixed(1)} cm`);return true;}
+
+const weaponRig=new pc.Entity('FXImpactM4');cameraEntity.addChild(weaponRig);
+let sideLeverEnt=null,magEnt=null;
+(()=>{
+  const mk=(c,m,g)=>{const mat=new pc.StandardMaterial();mat.diffuse=new pc.Color(...c);mat.useMetalness=true;mat.metalness=m;mat.gloss=g;mat.update();return mat;};
+  const blk=mk([.11,.12,.14],.72,.52),brz=mk([.45,.30,.16],.75,.65),crb=mk([.08,.09,.10],.35,.80),glv=mk([.09,.09,.11],.05,.72);
+  const gg=new pc.StandardMaterial();gg.diffuse=new pc.Color(.9,.92,.94);gg.emissive=new pc.Color(.15,.25,.2);gg.update();
+  const add=(geom,mat,p,r=[0,0,0])=>{const e=new pc.Entity();e.setLocalPosition(...p);e.setLocalEulerAngles(...r);e.addComponent('render',{meshInstances:[new pc.MeshInstance(pc.Mesh.fromGeometry(device,geom),mat)],castShadows:false});weaponRig.addChild(e);return e;};
+  add(new pc.BoxGeometry({halfExtents:new pc.Vec3(.022,.036,.22)}),blk,[.16,-.15,-.24]);add(new pc.BoxGeometry({halfExtents:new pc.Vec3(.018,.012,.24)}),brz,[.16,-.105,-.26]);add(new pc.CylinderGeometry({radius:.015,height:.68}),blk,[.16,-.125,-.56],[90,0,0]);add(new pc.CylinderGeometry({radius:.019,height:.14}),blk,[.16,-.125,-.92],[90,0,0]);add(new pc.CylinderGeometry({radius:.028,height:.34}),crb,[.16,-.178,-.44],[90,0,0]);add(new pc.SphereGeometry({radius:.028}),crb,[.16,-.178,-.61]);add(new pc.CylinderGeometry({radius:.0
